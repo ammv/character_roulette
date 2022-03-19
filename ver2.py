@@ -34,41 +34,54 @@ class Card(pygame.sprite.Sprite):
         
         self.rect = self.image.get_rect()
         
-        x = Roulette.WIDTH / 2 + Roulette.OFFSET*(n+1) + Card.WIDTH * n
-        if not x >= Roulette.WIDTH * 1.5:
+        x = Roulette.WIDHTDIV2 + Roulette.OFFSET*(n+1) + Card.WIDTH * n
+        if not x >= Game.WIDHTDIV2 + Roulette.WIDHTDIV2:
             self.rect.x = x
-        self.rect.y = Game.HEIGHT / 2 - Roulette.HEIGHT / 2 + Roulette.OFFSET
+            
+        self.rect.y = Game.HEIGHTDIV2 - Roulette.HEIGHTDIV2 + Roulette.OFFSET
         
-        self.image_x = self.rect.x
+        self.image_x = x - Roulette.WIDHTDIV2
         
     def update(self):
-        self.image_x += Card.STEP
+        if Card.STEP >= 0:
+            self.image_x += Card.STEP
         
-        if not self.rect.x >= Roulette.RIGHT_END:
-            self.rect.x += Card.STEP
-            
-        elif self.image_x >= Roulette.ALL_WIDTH:
-            self.image_x -= Roulette.ALL_WIDTH
-            self.rect.x = Roulette.WIDTH / 2 - Card.WIDTH + self.image_x#self.image_x 
+            if not self.rect.x >= Roulette.RIGHT_END:
+                self.rect.x += Card.STEP
+                
+            elif self.image_x >= Roulette.ALL_WIDTH:
+                self.image_x -= Roulette.ALL_WIDTH
+                self.rect.x = Roulette.WIDHTDIV2 - Card.WIDTH + Roulette.OFFSET #self.image_x 
+                
+            if Card.STEP >= 0:
+                Card.STEP /= 1.1;
+        
+        
+        
     
 class Roulette(pygame.sprite.Sprite):
     WIDTH = 400
+    WIDHTDIV2 = WIDTH / 2
+    
     HEIGHT = 110
+    HEIGHTDIV2 = HEIGHT / 2
+    
     OFFSET = 10
-    MAX_CARDS = 5
-    ALL_WIDTH = Card.WIDTH * MAX_CARDS
     
     RIGHT_END = WIDTH + WIDTH/2
     
     N = 5 #count of cards now
     
-    def __init__(self, sc_width, sc_height):
+    def __init__(self, sc_width, sc_height, MAX_CARDS = 5):
         pygame.sprite.Sprite.__init__(self)
         
         self.image = pygame.Surface((self.WIDTH, self.HEIGHT))
         self.image.fill(Color.WHITE)
         self.rect = self.image.get_rect()
         self.rect.center = (sc_width/2, sc_height/2)
+        
+        Roulette.MAX_CARDS = MAX_CARDS
+        Roulette.ALL_WIDTH = Card.WIDTH * MAX_CARDS
         
         self.cards = [Card(i) for i in range(self.N)]
         
@@ -78,8 +91,11 @@ class Roulette(pygame.sprite.Sprite):
 
 class Game:
     WIDTH = 800
+    WIDHTDIV2 = WIDTH / 2
+    
     HEIGHT = 450
-    FPS = 30
+    HEIGHTDIV2 = HEIGHT / 2
+    FPS = 60
     
     def __init__(self):
         pygame.init()
@@ -91,22 +107,24 @@ class Game:
         
     def set_sprites(self):
         self.roulette = Roulette(self.WIDTH, self.HEIGHT)
+        self.black_squares = [
+            pygame.Rect((Game.WIDTH - Roulette.WIDTH / 2,
+                        Game.HEIGHT / 2 - Roulette.HEIGHT / 2 + Roulette.OFFSET,
+                        Card.WIDTH+Roulette.OFFSET,
+                        Card.HEIGHT)), 
+            pygame.Rect((Roulette.WIDTHDIV2 - Card.WIDTH - Roulette.OFFSET,
+                        Game.HEIGHTDIV2 - Roulette.HEIGHTDIV2 + Roulette.OFFSET,
+                        Card.WIDTH+Roulette.OFFSET,
+                        Card.HEIGHT))
+        ]
+        self.black_squares[0].
+        
         self.all_sprites = pygame.sprite.Group()
         self.all_sprites.add(self.roulette)
         self.all_sprites.add(*self.roulette.cards)
         
-    def draw_black_rects(self):
-        pygame.draw.rect(self.screen, Color.BLACK, 
-                        (Game.WIDTH - Roulette.WIDTH / 2,
-                        Game.HEIGHT / 2 - Roulette.HEIGHT / 2 + Roulette.OFFSET,
-                        Card.WIDTH+Roulette.OFFSET,
-                        Card.HEIGHT))
-                        
-        pygame.draw.rect(self.screen, Color.BLACK, 
-                        (Roulette.WIDTH / 2 - Card.WIDTH - Roulette.OFFSET,
-                        Game.HEIGHT / 2 - Roulette.HEIGHT / 2 + Roulette.OFFSET,
-                        Card.WIDTH+Roulette.OFFSET,
-                        Card.HEIGHT))
+        self.all_sprites.add(self.black_squares[0])
+        self.all_sprites.add(self.black_squares[1])
             
     def set_window(self):
         #pygame.mixer.init()  # для звука
@@ -125,7 +143,6 @@ class Game:
                 
             self.screen.fill(Color.BLACK)
             self.all_sprites.draw(self.screen)
-            self.draw_black_rects()
             pygame.display.flip()
 
 
